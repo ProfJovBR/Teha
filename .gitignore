@@ -44,3 +44,13 @@ Thumbs.db
 *.sql.gz
 backups/
 exports/
+
+# Native desktop
+.venv/
+__pycache__/
+*.pyc
+*.sqlite3
+*.sqlite3-*
+*.db-*
+*.spec
+.pytest_cache/
