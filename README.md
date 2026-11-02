@@ -1,20 +1,11 @@
 # Teha
 
-Aplicativo desktop para gestão de consultórios odontológicos. Cliente local em **Python + PySide6 (Qt Widgets)** e **SQLite**, sem navegador ou servidor web.
+Sistema web para consultórios odontológicos, com o layout original aprovado: branco e azul escuro, menu recolhível, agenda, sala de espera e prontuário.
 
-**Estado atual: demonstração offline, somente com dados fictícios.** Autenticação, permissões reais e sincronização em nuvem continuam pendentes.
+[Site na Cloudflare](https://teha-odontologia.pages.dev) · [Documentação da versão web](docs/WEB.md)
 
-## Começar
+Código em `web/`. Cloudflare Pages publica a `main`. Supabase vinculado ao projeto; a configuração das novas tabelas está preparada, **pendente de autorização após bloqueio de revisão automática**.
 
-```powershell
-cd desktop
-py -3.12 -m venv .venv
-.venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe main.py
-```
+O site abre em demonstração com seis pacientes fictícios e dados temporários. A autenticação está conectada ao Supabase; a gravação dos módulos na nuvem depende da aplicação do esquema documentado. Não usar dados reais nesta etapa.
 
-Na primeira execução são criados seis pacientes fictícios e um profissional de demonstração. O banco fica na pasta de dados do usuário, fora do repositório.
-
-[Instalação, executável Windows, funcionalidades e limites](docs/DESKTOP.md).
-
-[Fluxo de colaboração](docs/WORKFLOW.md). Alterações da `frontend` e da `backend` chegam à `main` por Pull Request.
+A implementação desktop anterior está em `desktop/`, mantida como histórico. [Fluxo de colaboração](docs/WORKFLOW.md).

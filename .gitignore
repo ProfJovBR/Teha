@@ -54,3 +54,7 @@ __pycache__/
 *.db-*
 *.spec
 .pytest_cache/
+
+# Web build
+node_modules/
+web/dist/

@@ -1,0 +1,10 @@
+import {build} from 'esbuild';
+import {cp,mkdir,readFile} from 'node:fs/promises';
+await mkdir('dist',{recursive:true});
+await cp('public','dist',{recursive:true});
+const parts=await Promise.all(['src/cloud.js','src/layout.js','src/start.js'].map(f=>readFile(f,'utf8')));
+const imports="import {createClient} from '@supabase/supabase-js';\n";
+const contents=imports+'(async()=>{\n'+parts.join('\n').replace(imports,'')+'\n})().catch(e=>{const el=document.getElementById("authMessage");if(el)el.textContent="Falha ao iniciar: "+e.message;});';
+const url=process.env.SUPABASE_URL,key=process.env.SUPABASE_PUBLISHABLE_KEY;
+if(!url||!key)throw new Error('Configure SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY no ambiente de build.');
+await build({define:{__SUPABASE_URL__:JSON.stringify(url),__SUPABASE_KEY__:JSON.stringify(key)},stdin:{contents,resolveDir:process.cwd(),sourcefile:'teha-app.js'},bundle:true,format:'iife',target:'es2022',outfile:'dist/app.js',minify:true,legalComments:'none'});
