@@ -1,5 +1,6 @@
 """SQLite repository. Audited, atomic writes; revisions retain previous values."""
 import json
+from contextlib import closing
 import sqlite3
 from datetime import datetime, date
 from pathlib import Path
@@ -118,7 +119,7 @@ class Store:
         target = Path(path)
         if target.resolve() == self.path.resolve():
             raise ValueError('Escolha outro arquivo para o backup.')
-        with sqlite3.connect(target) as dest:
+        with closing(sqlite3.connect(target)) as dest:
             self.connection.backup(dest)
 
     def seed_demo(self):
