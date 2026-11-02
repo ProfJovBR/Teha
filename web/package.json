@@ -1,0 +1,1 @@
+{"name":"teha-web","version":"0.2.0","private":true,"type":"module","scripts":{"build":"node build.mjs","test":"node --test tests/*.test.mjs"},"dependencies":{"@supabase/supabase-js":"2.118.0"},"devDependencies":{"esbuild":"0.28.2"}}
