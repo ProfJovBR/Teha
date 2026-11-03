@@ -3,5 +3,5 @@
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://zfkkdpwedxcnqstyksdy.supabase.co wss://zfkkdpwedxcnqstyksdy.supabase.co; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://zumftdfcfoxovpvtjknm.supabase.co wss://zumftdfcfoxovpvtjknm.supabase.co; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'
   Cache-Control: no-store

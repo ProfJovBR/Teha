@@ -19,11 +19,11 @@ async function connectSession(session){
   const {error}=await cloud.rpc('teha_seed_demo');if(error)throw error;
   await refresh();await loadProfile();
   if(generation!==authGeneration)return;
-  ready=true;$('authScreen').hidden=true;$('workspace').hidden=false;$('workspace').inert=false;
+  ready=true;$('signOut').textContent='Sair';$('authScreen').hidden=true;$('workspace').hidden=false;$('workspace').inert=false;
   $('dbStatus').textContent='Supabase conectado';$('connectionState').textContent='Conectado à nuvem';
-  page('inicio');
+  document.querySelector('#inicio .notice').textContent='Dados da sua conta salvos no banco Clinica. Acesso compartilhado por equipe e assinatura digital ainda pendentes.';page('inicio');
   cloudChannel=cloud.channel('teha-'+session.user.id).on('postgres_changes',{event:'*',schema:'public',table:'teha_records',filter:'owner_id=eq.'+session.user.id},()=>{if(ready)refresh().catch(()=>{$('connectionState').textContent='Falha ao atualizar — tente novamente';})}).subscribe();
- }catch(error){showAuth('A configuração das tabelas desta versão ainda aguarda autorização. Use a demonstração por enquanto. Detalhe: '+error.message);}
+ }catch(error){showAuth('Não foi possível carregar sua conta: '+error.message);}
  finally{openingUser=null;}
 }
 $('authMode').onclick=()=>{signupMode=!signupMode;$('authSubmit').textContent=signupMode?'Criar conta':'Entrar';$('authMode').textContent=signupMode?'Já tenho conta':'Criar minha conta';$('authPassword').autocomplete=signupMode?'new-password':'current-password';$('authPassword').minLength=signupMode?12:1;$('authMessage').textContent='';};
@@ -55,8 +55,8 @@ function startDemo(){
  demoRecords.team.push({id:'demo-dentist',name:'Dentista de demonstração',role:'Dentista',_revision:1});
  $('authScreen').hidden=true;$('workspace').hidden=false;$('workspace').inert=false;
  $('signOut').textContent='Entrar na nuvem';
- $('connectionState').textContent='Demonstração • dados temporários';$('dbStatus').textContent='Conexão aguardando configuração';
- document.querySelector('#inicio .notice').textContent='Demonstração com dados fictícios e temporários. A gravação no Supabase aguarda autorização para configurar as tabelas. Recarregar a página reinicia os exemplos.';
+ $('connectionState').textContent='Demonstração • dados temporários';$('dbStatus').textContent='Clinica • entre para salvar na nuvem';
+ document.querySelector('#inicio .notice').textContent='Demonstração com dados fictícios e temporários. Entre na sua conta para salvar os registros no banco Clinica. Recarregar a página reinicia os exemplos.';
  refresh().then(()=>page('inicio')).catch(e=>msg(e.message));
 }
 $('viewDemo').onclick=startDemo;
