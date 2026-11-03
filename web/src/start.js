@@ -9,7 +9,7 @@ function showAuth(text=''){
  if(cloudChannel){cloud.removeChannel(cloudChannel);cloudChannel=null;}
 }
 async function connectSession(session){
- if(!session){startDemo();return;}
+ if(!session){if(new URLSearchParams(location.search).has('entrar'))showAuth();else startDemo();return;}
  if(openingUser===session.user.id)return;
  if(cloudUser?.id===session.user.id&&ready)return;
  openingUser=session.user.id;const generation=++authGeneration;
@@ -31,7 +31,7 @@ $('authForm').onsubmit=async e=>{
  e.preventDefault();const b=$('authSubmit');b.disabled=true;
  try{
   const credentials={email:$('authEmail').value.trim(),password:$('authPassword').value};
-  const result=signupMode?await cloud.auth.signUp(credentials):await cloud.auth.signInWithPassword(credentials);
+  const result=signupMode?await cloud.auth.signUp({...credentials,options:{emailRedirectTo:'https://teha-odontologia.pages.dev/confirmar'}}):await cloud.auth.signInWithPassword(credentials);
   if(result.error)throw result.error;
   $('authPassword').value='';
   if(result.data.session)await connectSession(result.data.session);
