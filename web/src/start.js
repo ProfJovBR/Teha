@@ -53,6 +53,11 @@ function startDemo(){
  for(const name of stores)demoRecords[name]=[];
  ['Ana Oliveira','Bruno Almeida','Carla Souza','Diego Martins','Elisa Ferreira','Fábio Costa'].forEach((name,i)=>demoRecords.patients.push({id:'demo-patient-'+i,name:name+' (teste)',phone:'',remarks:'Paciente fictício de demonstração',createdAt:now(),_revision:1}));
  demoRecords.team.push({id:'demo-dentist',name:'Dentista de demonstração',role:'Dentista',_revision:1});
+ demoRecords.patients[1].allergies='Penicilina (exemplo fictício)';
+ const arrived=minutes=>new Date(Date.now()-minutes*60000).toISOString();
+ const examples=[['09:00',0,'Avaliação inicial','Em atendimento',25],['09:45',1,'Restauração','Na sala de espera',12],['10:30',2,'Retorno','Na sala de espera',5],['11:15',3,'Limpeza','Confirmado',0]];
+ demoRecords.appointments=examples.map(([time,index,procedure,status,minutes],i)=>({id:'demo-appointment-'+i,patient:'demo-patient-'+index,professional:'demo-dentist',date:day(),time,duration:30,chair:'Sala 1',procedure,status,...(minutes?{arrivedAt:arrived(minutes)}:{}),createdAt:now(),_revision:1}));
+
  $('authScreen').hidden=true;$('workspace').hidden=false;$('workspace').inert=false;
  $('signOut').textContent='Entrar na nuvem';
  $('connectionState').textContent='Demonstração • dados temporários';$('dbStatus').textContent='Clinica • entre para salvar na nuvem';
