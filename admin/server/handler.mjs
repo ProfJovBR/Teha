@@ -1,3 +1,5 @@
+const OWNER_ID='0fd8e9a2-88e5-4c08-ab8f-a5635db8c3ee';
+const OWNER_EMAIL='wcsam@outlook.com';
 const ORIGIN='https://teha-admin.pages.dev';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export function createHandler(admin){return async function handler(req){
@@ -13,11 +15,13 @@ export function createHandler(admin){return async function handler(req){
   const {data:identity,error:authError}=await admin.auth.getUser(token);
   if(authError||!identity?.user)return reply({error:'Sessão inválida ou expirada.'},401);
   const actor=identity.user.id;
+  if(actor!==OWNER_ID||identity.user.email?.toLowerCase()!==OWNER_EMAIL||!identity.user.email_confirmed_at)return reply({error:'Acesso exclusivo do proprietário.'},403);
   const {data:membership,error:memberError}=await admin.from('teha_admins').select('user_id').eq('user_id',actor).maybeSingle();
   if(memberError||!membership)return reply({error:'Sua conta não tem acesso ao painel administrativo.'},403);
   if(Number(req.headers.get('Content-Length')||0)>10000)return reply({error:'Solicitação muito grande.'},413);
   const raw=await req.text();if(raw.length>10000)return reply({error:'Solicitação muito grande.'},413);
   let body;try{body=JSON.parse(raw);}catch{return reply({error:'Solicitação inválida.'},400);}
+  if(!body||typeof body!=='object'||Array.isArray(body))return reply({error:'Solicitação inválida.'},400);
   const action=body.action;
   if(action==='list'){
    const page=Math.max(1,Math.min(10000,Number.parseInt(body.page,10)||1));
@@ -32,6 +36,7 @@ export function createHandler(admin){return async function handler(req){
   if(!['create_user','change_email','change_password'].includes(action))return reply({error:'Operação inválida.'},400);
   if(action!=='create_user'&&!UUID.test(body.id||''))return reply({error:'Usuário inválido.'},400);
   const email=String(body.email||'').trim().toLowerCase();
+  if(action==='change_email'&&body.id===OWNER_ID&&email!==OWNER_EMAIL)return reply({error:'O e-mail proprietário está protegido. A alteração exige revisão pelo titular no Supabase.'},403);
   if(action!=='change_password'&&(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254))return reply({error:'Informe um e-mail válido.'},400);
   if(action!=='change_email'&&(typeof body.password!=='string'||body.password.length<12||body.password.length>128))return reply({error:'Use uma senha de 12 a 128 caracteres.'},400);
   // Register intent before changing credentials. Passwords and tokens never enter the audit table.
