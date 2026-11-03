@@ -2,7 +2,7 @@ import {build} from 'esbuild';
 import {cp,mkdir,readFile} from 'node:fs/promises';
 await mkdir('dist',{recursive:true});
 await cp('public','dist',{recursive:true});
-const parts=await Promise.all(['src/cloud.js','src/layout.js','src/start.js'].map(f=>readFile(f,'utf8')));
+const parts=await Promise.all(['src/cloud.js','src/layout.js','src/doctor.js','src/start.js'].map(f=>readFile(f,'utf8')));
 const imports="import {createClient} from '@supabase/supabase-js';\n";
 const contents=imports+'(async()=>{\n'+parts.join('\n').replace(imports,'')+'\n})().catch(e=>{const el=document.getElementById("authMessage");if(el)el.textContent="Falha ao iniciar: "+e.message;});';
 const url=process.env.SUPABASE_URL,key=process.env.SUPABASE_PUBLISHABLE_KEY;
