@@ -14,9 +14,7 @@ O horário é exibido em America/Sao_Paulo. Último login não é presença onli
 
 ## Estado de ativação
 
-O frontend e a Edge Function teha-admin estão preparados. As tabelas teha_admins e teha_admin_actions estão criadas com RLS e sem permissões de escrita para clientes comuns. **A allowlist de administradores está vazia:** atribuir acesso ao primeiro proprietário foi bloqueado pela revisão automática por exigir identificação explicitamente autorizada. Nenhuma conta recebeu poder administrativo.
-
-Após o proprietário indicar expressamente a conta autorizada, cadastrar somente o UUID verificado dessa conta em teha_admins. Não criar autorizações a partir de user_metadata ou de um parâmetro do navegador. O aplicativo não contém endpoint para elevar privilégios.
+O painel e a API estão ativos. Administração exclusiva da conta confirmada `wcsam@outlook.com`, vinculada ao UUID aprovado. O banco limita a lista de administradores a esse UUID; a API exige também o e-mail atual validado no Auth. O e-mail proprietário não pode ser substituído pelo painel. Veja [proteções, testes e limites](SECURITY.md).
 
 ## Segurança e implantação
 
