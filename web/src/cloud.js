@@ -11,10 +11,13 @@ const cloud=createClient(__SUPABASE_URL__,__SUPABASE_KEY__,{
 async function readSnapshot(){
  if(demoMode)return structuredClone(demoRecords);
  if(!cloudUser)throw new Error('Entre na sua conta.');
- const {data:access,error:accessError}=await cloud.rpc('teha_access');if(accessError)throw accessError;accessInfo=access;if(!['admin','doctor','reception','management'].includes(accessInfo.role)){showAuth('Sua conta está sem perfil de acesso. Solicite a liberação ao administrador.');throw new Error('Perfil de acesso não autorizado.');}
+ const recordsPage=offset=>cloud.from('teha_records').select('store,data,version').eq('owner_id',cloudUser.id).order('store').order('id').range(offset,offset+499);
+ // Both requests enforce current database permissions independently.
+ const [permissions,firstPage]=await Promise.all([cloud.rpc('teha_access'),recordsPage(0)]);
+ const {data:access,error:accessError}=permissions;if(accessError)throw accessError;accessInfo=access;if(!['admin','doctor','reception','management'].includes(accessInfo.role)){showAuth('Sua conta está sem perfil de acesso. Solicite a liberação ao administrador.');throw new Error('Perfil de acesso não autorizado.');}
  const grouped={};for(const name of stores)grouped[name]=[];
  for(let offset=0;;offset+=500){
-  const {data,error}=await cloud.from('teha_records').select('store,data,version').eq('owner_id',cloudUser.id).order('store').order('id').range(offset,offset+499);
+  const {data,error}=offset===0?firstPage:await recordsPage(offset);
   if(error)throw error;
   for(const row of data||[])if(grouped[row.store])grouped[row.store].push({...row.data,_revision:row.version});
   if((data||[]).length<500)break;
