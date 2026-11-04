@@ -6,7 +6,7 @@ insert into public.teha_records(owner_id,store,id,data) values
 (auth.uid(),'patients','rbac-test-patient','{"id":"rbac-test-patient","name":"RBAC fictício"}'),
 (auth.uid(),'team','rbac-test-provider','{"id":"rbac-test-provider","name":"RBAC fictício","salary":"secret-test"}'),
 (auth.uid(),'notes','rbac-test-note','{"id":"rbac-test-note","patient":"rbac-test-patient","content":"secret-test"}');
-insert into public.teha_access_roles(user_id,role) values(auth.uid(),'reception') on conflict(user_id) do update set role=excluded.role;
+insert into public.teha_access_roles(user_id,role,roles) values(auth.uid(),'reception',array['reception']) on conflict(user_id) do update set role=excluded.role,roles=excluded.roles;
 set local role authenticated;
 do $$ begin
  if (public.teha_access()->>'role')<>'reception' then raise exception 'Wrong role'; end if;
@@ -14,12 +14,12 @@ do $$ begin
  if exists(select 1 from public.teha_history) then raise exception 'Reception leaked history'; end if;
  if public.teha_access()->'team' @> '[{"salary":"secret-test"}]' then raise exception 'Team lookup leaked'; end if;
  if exists(select 1 from public.teha_records where owner_id<>auth.uid()) then raise exception 'Other owner leaked'; end if;
- begin update public.teha_access_roles set role='management' where user_id=auth.uid();raise exception 'Self promotion succeeded';exception when insufficient_privilege then null;end;
+ begin update public.teha_access_roles set role='management',roles=array['management'] where user_id=auth.uid();raise exception 'Self promotion succeeded';exception when insufficient_privilege then null;end;
  begin perform public.teha_save('finance','{"id":"rbac-denied","type":"Receita","amount":10,"status":"Pendente"}',0);raise exception 'Reception finance succeeded';exception when insufficient_privilege then null;end;
  perform public.teha_save('triages','{"id":"rbac-test-triage","patient":"rbac-test-patient","pain":0,"reason":"RBAC fictício"}',0);
 end $$;
 reset role;
-update public.teha_access_roles set role='doctor' where user_id=auth.uid();
+update public.teha_access_roles set role='doctor',roles=array['doctor'] where user_id=auth.uid();
 set local role authenticated;
 do $$ begin
  if public.teha_access()->>'role'<>'doctor' then raise exception 'Role not fresh'; end if;
@@ -29,7 +29,7 @@ do $$ begin
  perform public.teha_save('teeth','{"id":"rbac-test-tooth","patient":"rbac-test-patient","tooth":"11","condition":"Hígido"}',0);
 end $$;
 reset role;
-update public.teha_access_roles set role='management' where user_id=auth.uid();
+update public.teha_access_roles set role='management',roles=array['management'] where user_id=auth.uid();
 set local role authenticated;
 do $$ begin
  if public.teha_access()->>'role'<>'management' then raise exception 'Role not fresh'; end if;
@@ -39,7 +39,7 @@ do $$ begin
  perform public.teha_save('finance','{"id":"rbac-test-finance","patient":"rbac-test-patient","type":"Receita","amount":10,"status":"Pendente"}',0);
 end $$;
 reset role;
-update public.teha_access_roles set role='blocked' where user_id=auth.uid();
+update public.teha_access_roles set role='blocked',roles='{}' where user_id=auth.uid();
 set local role authenticated;
 do $$ begin
  if exists(select 1 from public.teha_records) then raise exception 'Blocked account leaked'; end if;
