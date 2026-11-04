@@ -1,7 +1,8 @@
 import {createClient} from '@supabase/supabase-js';
 let demoMode=false,demoRecords={},accessInfo={role:'blocked'};
 const rolePages={doctor:['inicio','pacientes','agenda','triagem','prontuario','odontograma','tratamentos','documentos'],reception:['inicio','pacientes','agenda','triagem'],management:['relatorios','financeiro','equipe']};
-function canPage(id){return accessInfo.role==='admin'||(rolePages[accessInfo.role]||[]).includes(id);}
+function hasRole(role){return (accessInfo.roles||[accessInfo.role]).includes(role);}
+function canPage(id){return hasRole('admin')||(accessInfo.roles||[accessInfo.role]).some(role=>(rolePages[role]||[]).includes(id));}
 function applyAccess(){document.querySelectorAll('nav [data-page]').forEach(el=>el.hidden=!canPage(el.dataset.page));$('adminHistory').hidden=accessInfo.role!=='admin';$('doctorSearch').hidden=!canPage('pacientes');const clinical=canPage('prontuario');$('doctorCurrent').closest('article').hidden=!clinical;$('doctorAlerts').closest('article').hidden=!clinical;const active=document.querySelector('.content>section:not([hidden])');if(active&&!canPage(active.id))page(accessInfo.role==='management'?'relatorios':'inicio');}
 
 const cloud=createClient(__SUPABASE_URL__,__SUPABASE_KEY__,{
@@ -22,6 +23,6 @@ async function readSnapshot(){
  if(error)throw error;
  grouped.audit=(audits||[]).map(a=>({id:String(a.id),createdAt:a.at,author:a.actor,action:'Gravação na nuvem',store:a.store,recordId:a.record_id}));
  }
- if(['doctor','reception'].includes(accessInfo.role))grouped.team=accessInfo.team||[];if(accessInfo.role==='management')grouped.patients=accessInfo.patients||[];if(accessInfo.role==='doctor'&&accessInfo.clinic?.id)grouped.settings.push(accessInfo.clinic);
+ if((hasRole('doctor')||hasRole('reception'))&&!hasRole('management')&&!hasRole('admin'))grouped.team=accessInfo.team||[];if(hasRole('management')&&!hasRole('doctor')&&!hasRole('reception')&&!hasRole('admin'))grouped.patients=accessInfo.patients||[];if(hasRole('doctor')&&!hasRole('management')&&accessInfo.clinic?.id)grouped.settings.push(accessInfo.clinic);
  return grouped;
 }

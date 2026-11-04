@@ -16,3 +16,7 @@ This change retains the existing per-account owner_id boundary. It does not merg
 Apply schema.sql on a new deployment, then roles.sql. The production changes were applied through named migrations `teha_live_role_permissions_and_admin_history` and `teha_hide_privileged_access_lookup`. SQL regression script roles-test.sql runs all fixtures/role updates in a transaction ending in rollback. Run it on the configured Clinica project; the pinned owner must already exist. Admin endpoint tests: npm test in admin/. Frontend tests: npm test in web/.
 
 The privileged lookup and record validation stay in the private schema; public teha_access is an invoker wrapper. The validator authenticates the row owner and preserves clinical append-only rules; RLS authorizes reads/writes by store. Anonymous callers receive no access. History remains append-only and is readable only by the pinned admin.
+
+## Multiple accesses
+
+Migration teha_combined_access_roles preserves all existing assignments in roles[]. Admin checkboxes grant the union of doctor/reception/management; empty selection blocks access. Administrator is never an assignable checkbox. The legacy role column only selects the landing page and supports older clients; the protected roles array controls actual permissions. The server writes both in one upsert. Clinical/finance lookup projections are only used if the combined profile cannot read the corresponding complete records.
