@@ -16,8 +16,7 @@ async function connectSession(session){
  try{
   demoMode=false;cloudUser=session.user;
   $('authMessage').textContent='Carregando seu espaço…';
-  const {error}=await cloud.rpc('teha_seed_demo');if(error)throw error;
-  await refresh();await loadProfile();
+  await refresh();await loadProfile(true);
   if(generation!==authGeneration)return;
   ready=true;$('signOut').textContent='Sair';$('authScreen').hidden=true;$('workspace').hidden=false;$('workspace').inert=false;
   $('dbStatus').textContent='Supabase conectado';$('connectionState').textContent='Conectado à nuvem';
