@@ -1,6 +1,7 @@
 const OWNER_ID='0fd8e9a2-88e5-4c08-ab8f-a5635db8c3ee';
 const OWNER_EMAIL='wcsam@outlook.com';
 const ORIGIN='https://teha-admin.pages.dev';
+const ROLES=['doctor','reception','management','blocked'];
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export function createHandler(admin){return async function handler(req){
  const origin=req.headers.get('Origin');
@@ -26,15 +27,26 @@ export function createHandler(admin){return async function handler(req){
   if(action==='list'){
    const page=Math.max(1,Math.min(10000,Number.parseInt(body.page,10)||1));
    const {data,error}=await admin.auth.admin.listUsers({page,perPage:50});if(error)throw error;
-   const users=data.users.map(u=>({id:u.id,email:u.email,name:u.user_metadata?.name||'',created_at:u.created_at,last_sign_in_at:u.last_sign_in_at,email_confirmed_at:u.email_confirmed_at,banned_until:u.banned_until}));
+   const {data:roles,error:roleError}=await admin.from('teha_access_roles').select('user_id,role');if(roleError)throw roleError;
+   const users=data.users.map(u=>({id:u.id,email:u.email,name:u.user_metadata?.name||'',access_role:u.id===OWNER_ID?'admin':roles?.find(r=>r.user_id===u.id)?.role||'blocked',created_at:u.created_at,last_sign_in_at:u.last_sign_in_at,email_confirmed_at:u.email_confirmed_at,banned_until:u.banned_until}));
    return reply({users,page,total:data.total??null,hasMore:users.length===50,actor});
   }
   if(action==='audit'){
    const {data,error}=await admin.from('teha_admin_actions').select('id,actor_id,target_id,action,status,created_at,completed_at').order('created_at',{ascending:false}).limit(100);if(error)throw error;
    return reply({logs:data});
   }
-  if(!['create_user','change_email','change_password'].includes(action))return reply({error:'Operação inválida.'},400);
+  if(!['create_user','change_email','change_password','change_role'].includes(action))return reply({error:'Operação inválida.'},400);
   if(action!=='create_user'&&!UUID.test(body.id||''))return reply({error:'Usuário inválido.'},400);
+  if(['create_user','change_role'].includes(action)&&!ROLES.includes(body.role))return reply({error:'Escolha um perfil de acesso válido.'},400);
+  if(action==='change_role'){
+   if(body.id===OWNER_ID)return reply({error:'O administrador proprietário está protegido.'},403);
+   const {data:log,error:logError}=await admin.from('teha_admin_actions').insert({actor_id:actor,target_id:body.id,action}).select('id').single();
+   if(logError)return reply({error:'Não foi possível registrar a operação.'},503);
+   const {error}=await admin.from('teha_access_roles').upsert({user_id:body.id,role:body.role,updated_at:new Date().toISOString()});
+   const {error:completeError}=await admin.from('teha_admin_actions').update({status:error?'failed':'success',completed_at:new Date().toISOString()}).eq('id',log.id);
+   if(error)return reply({error:'Não foi possível alterar o perfil.'},400);
+   return reply({ok:true,warning:completeError?'Perfil alterado; finalização do histórico pendente.':undefined});
+  }
   const email=String(body.email||'').trim().toLowerCase();
   if(action==='change_email'&&body.id===OWNER_ID&&email!==OWNER_EMAIL)return reply({error:'O e-mail proprietário está protegido. A alteração exige revisão pelo titular no Supabase.'},403);
   if(action!=='change_password'&&(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254))return reply({error:'Informe um e-mail válido.'},400);
@@ -46,6 +58,7 @@ export function createHandler(admin){return async function handler(req){
   const target=result.data?.user?.id||body.id||null;
   const {error:completeError}=await admin.from('teha_admin_actions').update({target_id:target,status:result.error?'failed':'success',completed_at:new Date().toISOString()}).eq('id',log.id);
   if(result.error)return reply({error:result.error.message||'Não foi possível alterar a conta.'},400);
+  if(action==='create_user'){const {error}=await admin.from('teha_access_roles').upsert({user_id:target,role:body.role});if(error)return reply({ok:true,id:target,warning:'Conta criada sem acesso. Atribua o perfil antes de utilizar.'});}
   return reply({ok:true,id:target,warning:completeError?'A operação foi concluída, mas a finalização da auditoria está pendente.':undefined});
  }catch{return reply({error:'Não foi possível concluir a operação. Tente novamente.'},500);}
 };}
