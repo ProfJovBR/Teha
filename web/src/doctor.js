@@ -29,7 +29,7 @@ function doctorOpenPatient(patient,section='prontuario',professional=''){
  if(professional&&form?.elements.professional)form.elements.professional.value=professional;
  renderList(section);if(section==='prontuario')renderTriageHistory();
 }
-async function doctorStartCare(id){let a=state.appointments.find(a=>a.id===id);if(!a)throw new Error('Consulta não encontrada.');if(['Agendado','Confirmado'].includes(a.status)){await arrive(id);a=state.appointments.find(a=>a.id===id);}if(a.status!=='Em atendimento'){if(a.status!=='Na sala de espera')throw new Error('Confirme a chegada antes de iniciar o atendimento.');await write('appointments',{...a,status:'Em atendimento',updatedAt:now()},'Iniciar atendimento');await refresh();}doctorOpenPatient(a.patient,'prontuario',a.professional);}
+async function doctorStartCare(id){if(!canPage('prontuario')){openAssessment(id);return;}let a=state.appointments.find(a=>a.id===id);if(!a)throw new Error('Consulta não encontrada.');if(['Agendado','Confirmado'].includes(a.status)){await arrive(id);a=state.appointments.find(a=>a.id===id);}if(a.status!=='Em atendimento'){if(a.status!=='Na sala de espera')throw new Error('Confirme a chegada antes de iniciar o atendimento.');await write('appointments',{...a,status:'Em atendimento',updatedAt:now()},'Iniciar atendimento');await refresh();}doctorOpenPatient(a.patient,'prontuario',a.professional);}
 function doctorTodaysAppointments(){return (state.appointments||[]).filter(a=>a.date===day()).sort((a,b)=>a.time.localeCompare(b.time));}
 function renderDoctorDashboard(){
  if(!$('doctorAgenda'))return;
@@ -44,10 +44,10 @@ function renderDoctorDashboard(){
  const agenda=$('doctorAgenda');agenda.replaceChildren();
  if(!today.length)doctorEmpty(agenda,'Nenhuma consulta agendada para hoje. Use “Agendar consulta” para organizar os atendimentos.');
  for(const a of today){const row=document.createElement('article');row.className='doctor-appointment'+(a.status==='Em atendimento'?' current':'');row.append(doctorText('div',a.time,'doctor-time'));const person=document.createElement('div');person.className='doctor-person';person.append(doctorText('strong',patientName(a.patient)),doctorText('small',a.procedure||'Consulta'));const controls=document.createElement('div');controls.className='doctor-row-actions';const status=doctorText('span',a.status,'doctor-status'+(a.status==='Em atendimento'?' current':a.status==='Na sala de espera'?' waiting':['Cancelado','Faltou','Concluído'].includes(a.status)?' inactive':''));controls.append(status);
-  if(a.status==='Em atendimento')controls.append(actionButton('Abrir atendimento',()=>doctorOpenPatient(a.patient,'prontuario',a.professional)));
-  else if(a.status==='Na sala de espera')controls.append(actionButton('Iniciar atendimento',()=>doctorStartCare(a.id)));
+  if(a.status==='Em atendimento')controls.append(actionButton(canPage('prontuario')?'Abrir atendimento':'Ver triagem',()=>canPage('prontuario')?doctorOpenPatient(a.patient,'prontuario',a.professional):openAssessment(a.id)));
+  else if(a.status==='Na sala de espera')controls.append(actionButton(canPage('prontuario')?'Iniciar atendimento':'Iniciar triagem',()=>doctorStartCare(a.id)));
   else if(['Agendado','Confirmado'].includes(a.status))controls.append(actionButton('Confirmar chegada',()=>arrive(a.id)));
-  else controls.append(actionButton('Ver prontuário',()=>doctorOpenPatient(a.patient)));
+  else if(canPage('prontuario'))controls.append(actionButton('Ver prontuário',()=>doctorOpenPatient(a.patient)));
   const editButton=actionButton('⋯',()=>{page('agenda');edit('agenda',a.id);});editButton.setAttribute('aria-label','Editar consulta de '+patientName(a.patient));controls.append(editButton);row.append(person,controls);agenda.append(row);
  }
  const queue=$('doctorWaitingList');queue.replaceChildren();if(!waiting.length)doctorEmpty(queue,'Nenhum paciente aguardando. Confirme a chegada pela agenda.');
